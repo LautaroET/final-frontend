@@ -54,6 +54,15 @@ export const fetchRefugioById = async (id) => {
   }
 };
 
+export const deleteRefugio = async (id) => {
+  try {
+    await axios.delete(`${BASE_URL}/api/refugios/${id}`);
+  } catch (error) {
+    console.error("Error al eliminar refugio:", error);
+    throw error;
+  }
+};
+
 /* =========================
    MASCOTAS
 ========================= */
