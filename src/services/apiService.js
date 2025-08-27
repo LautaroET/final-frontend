@@ -63,6 +63,26 @@ export const deleteRefugio = async (id) => {
   }
 };
 
+export const createRefugio = async (refugioData) => {
+  try {
+    const { data } = await axios.post(`${BASE_URL}/api/refugios`, refugioData);
+    return data;
+  } catch (error) {
+    console.error("Error al crear refugio:", error);
+    throw error;
+  }
+};
+
+export const updateRefugio = async (id, refugioData) => {
+  try {
+    const { data } = await axios.put(`${BASE_URL}/api/refugios/${id}`, refugioData);
+    return data;
+  } catch (error) {
+    console.error("Error al actualizar refugio:", error);
+    throw error;
+  }
+};
+
 /* =========================
    MASCOTAS
 ========================= */
@@ -129,5 +149,31 @@ export const getMascotasByRefugio = async (refugioId) => {
   } catch (error) {
     console.error("Error obteniendo mascotas por refugio:", error);
     return [];
+  }
+};
+
+export const createMascota = async (refugioId, mascotaData) => {
+  try {
+    const { data } = await axios.post(`${BASE_URL}/api/mascotas`, {
+      ...mascotaData,
+      refugio: refugioId,
+    });
+    return data;
+  } catch (error) {
+    console.error("Error al crear mascota:", error);
+    throw error;
+  }
+};
+
+export const updateMascota = async (refugioId, mascotaId, mascotaData) => {
+  try {
+    const { data } = await axios.put(`${BASE_URL}/api/mascotas/${mascotaId}`, {
+      ...mascotaData,
+      refugio: refugioId,
+    });
+    return data;
+  } catch (error) {
+    console.error("Error al actualizar mascota:", error);
+    throw error;
   }
 };
