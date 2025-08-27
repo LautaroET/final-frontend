@@ -1,20 +1,18 @@
-// Importamos la librería axios
+// src/services/apiService.js
 import axios from "axios";
 
-// Obtiene la URL base de la API desde la variable de entorno
 const BASE_URL = import.meta.env.VITE_API_URL;
 
-/* ======================================================
+/* =========================
    REFUGIOS
-====================================================== */
+========================= */
 
-// Traer todos los refugios con búsqueda opcional
 export const fetchAllRefugios = async (search = "") => {
   try {
     const { data } = await axios.get(`${BASE_URL}/api/refugios`);
     return data
       .map((r) => ({
-        id: r._id, // <- backend usa _id → frontend usa id
+        id: r._id,
         name: r.nombre,
         address: r.direccion,
         phone: r.telefono,
@@ -36,7 +34,6 @@ export const fetchAllRefugios = async (search = "") => {
   }
 };
 
-// Traer refugio por ID
 export const fetchRefugioById = async (id) => {
   try {
     const { data } = await axios.get(`${BASE_URL}/api/refugios/${id}`);
@@ -57,11 +54,10 @@ export const fetchRefugioById = async (id) => {
   }
 };
 
-/* ======================================================
+/* =========================
    MASCOTAS
-====================================================== */
+========================= */
 
-// Traer todas las mascotas
 export const fetchAllMascotas = async () => {
   try {
     const { data } = await axios.get(`${BASE_URL}/api/mascotas`);
@@ -75,7 +71,7 @@ export const fetchAllMascotas = async () => {
       health: m.salud,
       description: m.descripcion,
       image: m.imagen,
-      refuge: m.refugio, // puede ser id o un objeto
+      refuge: m.refugio,
     }));
   } catch (error) {
     console.error("Error fetching mascotas:", error);
@@ -83,7 +79,6 @@ export const fetchAllMascotas = async () => {
   }
 };
 
-// Traer mascota por ID
 export const fetchMascotaById = async (id) => {
   try {
     const { data } = await axios.get(`${BASE_URL}/api/mascotas/${id}`);
