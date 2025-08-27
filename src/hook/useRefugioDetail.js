@@ -17,7 +17,7 @@ export const useRefugioDetail = (id) => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/refugios/${id}`
+          `${import.meta.env.VITE_API_URL}/api/refugios/${id}`
         );
         setRefugio(response.data);
       } catch (err) {
