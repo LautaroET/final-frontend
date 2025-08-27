@@ -177,3 +177,55 @@ export const updateMascota = async (refugioId, mascotaId, mascotaData) => {
     throw error;
   }
 };
+
+export const getAllMascotas = async (searchValue = "") => {
+  try {
+    const { data } = await axios.get(`${BASE_URL}/api/mascotas`);
+    return data
+      .map((m) => ({
+        id: m._id,
+        name: m.name,
+        age: m.age,
+        breed: m.breed,
+        gender: m.gender,
+        size: m.size,
+        personality: m.personality,
+        status: m.status,
+        description: m.description,
+        history: m.history,
+        image: m.image,
+        refugio: m.refugio,
+      }))
+      .filter(
+        (m) =>
+          !searchValue ||
+          m.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
+          m.breed?.toLowerCase().includes(searchValue.toLowerCase())
+      );
+  } catch (error) {
+    console.error("Error al obtener mascotas:", error);
+    return [];
+  }
+};
+export const getMascotaById = async (id) => {
+  try {
+    const { data } = await axios.get(`${BASE_URL}/api/mascotas/${id}`);
+    return {
+      id: data._id,
+      name: data.name,
+      age: data.age,
+      breed: data.breed,
+      gender: data.gender,
+      size: data.size,
+      personality: data.personality,
+      status: data.status,
+      description: data.description,
+      history: data.history,
+      image: data.image,
+      refugio: data.refugio,
+    };
+  } catch (error) {
+    console.error("Error al obtener mascota por ID:", error);
+    return null;
+  }
+};
