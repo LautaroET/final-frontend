@@ -99,3 +99,26 @@ export const fetchMascotaById = async (id) => {
     return null;
   }
 };
+
+export const getMascotasByRefugio = async (refugioId) => {
+  try {
+    const { data } = await axios.get(`${BASE_URL}/api/refugios/${refugioId}/mascotas`);
+    return data.map((m) => ({
+      id: m._id,
+      name: m.name,
+      age: m.age,
+      breed: m.breed,
+      gender: m.gender,
+      size: m.size,
+      personality: m.personality,
+      status: m.status,
+      description: m.description,
+      history: m.history,
+      image: m.image,
+      refugio: m.refugio,
+    }));
+  } catch (error) {
+    console.error("Error obteniendo mascotas por refugio:", error);
+    return [];
+  }
+};

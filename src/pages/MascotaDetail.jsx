@@ -10,63 +10,63 @@ import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 
 const RefugioDetail = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { refugio, isLoading, error } = useRefugioDetail(id);
-  const [mascotas, setMascotas] = useState([]);
-  const [loadingMascotas, setLoadingMascotas] = useState(true);
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const { refugio, isLoading, error } = useRefugioDetail(id);
+    const [mascotas, setMascotas] = useState([]);
+    const [loadingMascotas, setLoadingMascotas] = useState(true);
 
-  useEffect(() => {
-    const fetchMascotas = async () => {
-      if (refugio) {
-        setLoadingMascotas(true);
-        try {
-          const mascotasData = await getMascotasByRefugio(refugio.id);
-          setMascotas(mascotasData);
+    useEffect(() => {
+        const fetchMascotas = async () => {
+        if (refugio) {
+            setLoadingMascotas(true);
+            try {
+            const mascotasData = await getMascotasByRefugio(refugio.id);
+            setMascotas(mascotasData);
         } catch (err) {
-          console.error("Error obteniendo mascotas del refugio:", err);
-          toast.error('Error al cargar las mascotas del refugio.');
+            console.error("Error obteniendo mascotas del refugio:", err);
+            toast.error('Error al cargar las mascotas del refugio.');
         } finally {
-          setLoadingMascotas(false);
+            setLoadingMascotas(false);
         }
-      }
+        }
     };
 
     fetchMascotas();
-  }, [refugio]);
+    }, [refugio]);
 
-  const handleDelete = async () => {
+    const handleDelete = async () => {
     Swal.fire({
-      title: '¿Estás seguro?',
-      text: "Eliminar este refugio también eliminará sus mascotas.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar!',
-      cancelButtonText: 'Cancelar'
+        title: '¿Estás seguro?',
+        text: "Eliminar este refugio también eliminará sus mascotas.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar!',
+        cancelButtonText: 'Cancelar'
     }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await deleteRefugio(id);
-          toast.success('Refugio eliminado exitosamente.');
-          navigate('/refugios');
-        } catch (err) {
-          toast.error('Error al eliminar el refugio.');
-          console.error("Error al eliminar:", err);
+        if (result.isConfirmed) {
+            try {
+            await deleteRefugio(id);
+            toast.success('Refugio eliminado exitosamente.');
+            navigate('/refugios');
+            } catch (err) {
+            toast.error('Error al eliminar el refugio.');
+            console.error("Error al eliminar:", err);
         }
-      }
+        }
     });
-  };
+    };
 
-  const handleAddMascota = () => {
+    const handleAddMascota = () => {
     navigate(`/mascotas/nuevo?refugioId=${refugio.id}`);
-  };
+    };
 
-  if (isLoading) return <Loader />;
-  if (error) return (
+    if (isLoading) return <Loader />;
+    if (error) return (
     <div className="min-h-screen flex items-center justify-center text-center bg-gray-100 dark:bg-gray-900 transition-colors duration-700">
-      <div className="p-8 rounded-lg bg-white dark:bg-gray-800 shadow-xl">
+        <div className="p-8 rounded-lg bg-white dark:bg-gray-800 shadow-xl">
         <p className="text-red-500 text-xl font-semibold mb-4">{error}</p>
         <Button onClick={() => navigate(-1)}>Volver</Button>
       </div>
