@@ -1,36 +1,36 @@
-import { useState, useEffect } from 'react';
-import { fetchRefugioById } from '../services/apiService';
-import { useParams } from 'react-router-dom';
+// src/hook/useRefugioDetail.js
+import { useState, useEffect } from "react";
+import axios from "axios";
 
-export const useRefugioDetail = () => {
-  const { id } = useParams();
-  const { refugio, isLoading, error } = useRefugioDetail(id);
-
-  if (!id) return <p>Falta el ID de refugio en la URL.</p>;
-  if (isLoading) return <Loader />;
-  if (error) return <p>{error}</p>;
+export const useRefugioDetail = (id) => {
+  const [refugio, setRefugio] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const getRefugioDetail = async () => {
-      if (!id) {
-        setIsLoading(false);
-        setError("ID de refugio no válido.");
-        return;
-      }
-      setIsLoading(true);
-      setError(null);
+    if (!id) {
+      setError("Falta el ID de refugio en la URL.");
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
       try {
-        const data = await fetchRefugioById(id);
-        setRefugio(data);
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/refugios/${id}`
+        );
+        setRefugio(response.data);
       } catch (err) {
-        setError(err.message);
+        console.error("Error al cargar el refugio:", err);
+        setError("Error al cargar el refugio.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    getRefugioDetail();
+    fetchData();
   }, [id]);
 
   return { refugio, isLoading, error };
 };
+
