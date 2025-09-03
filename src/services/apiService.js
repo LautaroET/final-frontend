@@ -2,178 +2,92 @@ import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
-// --- Operaciones para Refugios ---
+const api = axios.create({
+  baseURL: BASE_URL,
+});
 
-export const fetchAllRefugios = async (search = "") => {
-  try {
-    const [byName, byAddress] = await Promise.allSettled([
-      axios.get(`${BASE_URL}/refugios`, { params: { name: search } }),
-      axios.get(`${BASE_URL}/refugios`, { params: { address: search } }),
-    ]);
-
-    const dataByName = byName.status === "fulfilled" ? byName.value.data : [];
-    const dataByAddress = byAddress.status === "fulfilled" ? byAddress.value.data : [];
-
-    const allRefugios = [...dataByName, ...dataByAddress];
-    const uniqueRefugios = allRefugios.filter(
-      (refugio, index, self) => self.findIndex(r => r.id === refugio.id) === index
-    );
-
-    return uniqueRefugios;
-
-  } catch (error) {
-    console.error("Error fetching refugios:", error);
-    return [];
+api.interceptors.request.use((config) => {
+  const token = sessionStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
+  return config;
+});
+
+const handleError = (error) => {
+  return { 
+    data: null, 
+    error: error.response?.data?.message || error.message 
+  };
 };
 
+// Obtener refugio por ID desde el listado
 export const fetchRefugioById = async (id) => {
   try {
-    const response = await axios.get(`${BASE_URL}/refugios/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching refugio with id ${id}:`, error);
-    throw new Error("No se pudo cargar la información del refugio.");
-  }
-};
-
-export const createRefugio = async (refugioData) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/refugios`, refugioData);
-    return response.data;
-  } catch (error) {
-    console.error("Error creating refugio:", error);
-    throw error;
-  }
-};
-
-export const updateRefugio = async (id, refugioData) => {
-  try {
-    const response = await axios.put(`${BASE_URL}/refugios/${id}`, refugioData);
-    return response.data;
-  } catch (error) {
-    console.error(`Error updating refugio ${id}:`, error);
-    throw error;
-  }
-};
-
-export const deleteRefugio = async (id) => {
-  try {
-    await axios.delete(`${BASE_URL}/refugios/${id}`);
-  } catch (error) {
-    console.error(`Error deleting refugio ${id}:`, error);
-    throw error;
-  }
-};
-
-// --- Operaciones para Mascotas ---
-
-export const getAllMascotas = async (search = "") => {
-  try {
-    const refugios = await fetchAllRefugios();
+    const response = await api.get('/refugios');
+    const refugios = response.data || [];
+    const refugio = refugios.find(r => r._id === id || r.id === id);
     
-    const mascotasPromises = refugios.map(async (refugio) => {
-      try {
-        const response = await axios.get(`${BASE_URL}/refugios/${refugio.id}/pets`, {
-          params: { q: search } // Usar 'q' para búsqueda full-text en JSON Server
-        });
-        
-        return response.data.map(mascota => ({
-          ...mascota,
-          refugio: {
-            id: refugio.id,
-            name: refugio.name,
-            address: refugio.address,
-            phone: refugio.phone
-          }
-        }));
-      } catch (error) {
-        if (error.response?.status !== 404) {
-          console.error(`Error obteniendo mascotas del refugio ${refugio.id}:`, error);
-        }
-        return [];
-      }
-    });
-
-    const allMascotas = (await Promise.all(mascotasPromises)).flat();
-    return allMascotas;
-
-  } catch (error) {
-    console.error("Error inesperado:", error);
-    return [];
-  }
-};
-
-export const getMascotaById = async (idMascota) => {
-  try {
-    const refugios = await fetchAllRefugios();
-    
-    for (const refugio of refugios) {
-      try {
-        const response = await axios.get(`${BASE_URL}/refugios/${refugio.id}/pets/${idMascota}`);
-        if (response.data) {
-          return {
-            ...response.data,
-            refugio: {
-              id: refugio.id,
-              name: refugio.name,
-              address: refugio.address,
-              phone: refugio.phone
-            }
-          };
-        }
-      } catch (error) {
-        if (error.response?.status !== 404) {
-          console.error(`Error en refugio ${refugio.id}:`, error);
-        }
-      }
+    if (!refugio) {
+      return { data: null, error: 'Refugio no encontrado' };
     }
     
-    throw new Error(`Mascota con ID ${idMascota} no encontrada.`);
+    return { data: refugio };
   } catch (error) {
-    console.error(`Error buscando mascota ${idMascota}:`, error);
-    throw error;
+    return handleError(error);
   }
 };
 
-export const createMascota = async (refugioId, mascotaData) => {
+// Resto de endpoints sin cambios
+export const fetchAllRefugios = (search = '') =>
+  api.get(`/refugios?search=${encodeURIComponent(search)}`).catch(handleError);
+
+export const createRefugio = (refugioData) =>
+  api.post('/refugios', refugioData).catch(handleError);
+
+export const updateRefugio = (id, refugioData) =>
+  api.put(`/refugios/${id}`, refugioData).catch(handleError);
+
+export const deleteRefugio = (id) =>
+  api.delete(`/refugios/${id}`).catch(handleError);
+
+export const fetchMisRefugios = () =>
+  api.get('/refugios/yo').catch(handleError);
+
+export const getAllMascotas = async (filters = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.append(key, value);
+  });
+
   try {
-    const response = await axios.post(`${BASE_URL}/refugios/${refugioId}/pets`, mascotaData);
-    return response.data;
+    const response = await api.get(`/mascotas?${params.toString()}`);
+    return response.data; // ✅ solo los datos
   } catch (error) {
-    console.error(`Error creando mascota en refugio ${refugioId}:`, error);
-    throw error;
+    console.error("Error fetching mascotas:", error);
+    return []; // ✅ devuelve array vacío en lugar de objeto con error
   }
 };
 
-export const updateMascota = async (refugioId, mascotaId, mascotaData) => {
+export const getMascotaById = async (id) => {
   try {
-    const response = await axios.put(`${BASE_URL}/refugios/${refugioId}/pets/${mascotaId}`, mascotaData);
-    return response.data;
+    const response = await api.get(`/mascotas/${id}`);
+    return response.data; // ✅ devuelve solo los datos
   } catch (error) {
-    console.error(`Error actualizando mascota ${mascotaId}:`, error);
-    throw error;
+    console.error('Error obteniendo mascota:', error);
+    return null;
   }
 };
+export const createMascota = (mascotaData) =>
+  api.post('/mascotas', mascotaData).catch(handleError);
 
-export const deleteMascota = async (refugioId, mascotaId) => {
-  try {
-    await axios.delete(`${BASE_URL}/refugios/${refugioId}/pets/${mascotaId}`);
-  } catch (error) {
-    console.error(`Error eliminando mascota ${mascotaId}:`, error);
-    throw error;
-  }
-};
+export const updateMascota = (id, mascotaData) =>
+  api.put(`/mascotas/${id}`, mascotaData).catch(handleError);
 
-export const getMascotasByRefugio = async (refugioId) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/refugios/${refugioId}/pets`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error obteniendo mascotas del refugio ${refugioId}:`, error);
-    if (error.response?.status === 404) {
-      return []; // Retornar array vacío si no hay mascotas
-    }
-    throw error;
-  }
-};
+export const deleteMascota = (id) =>
+  api.delete(`/mascotas/${id}`).catch(handleError);
+
+export const getMascotasByRefugio = (refugioId) =>
+  api.get(`/mascotas?refugio=${refugioId}`).catch(handleError);
+
+export default api;

@@ -8,7 +8,7 @@ function RefugioList({ refugios }) {
       {refugios.length > 0 ? (
         <>
           {refugios.map((refugio) => (
-            <RefugioCard key={refugio.id} refugio={refugio} />
+            <RefugioCard key={refugio._id} refugio={refugio} />
           ))}
           
           {/* El paginador se renderiza ahora en el componente padre, Refugios.jsx */}

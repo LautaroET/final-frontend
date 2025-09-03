@@ -1,22 +1,23 @@
 import { useState, useEffect } from "react";
 import { fetchAllRefugios } from "../services/apiService";
 
-const ITEMS_POR_PAGE = 12; // Define la cantidad de ítems por página
+const ITEMS_POR_PAGE = 12;
 
 export const useRefugios = (searchValue = "") => {
   const [refugios, setRefugios] = useState([]);
   const [allRefugios, setAllRefugios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1); // Nuevo estado para la página actual
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setIsLoading(true);
     const getRefugios = async () => {
       try {
-        const data = await fetchAllRefugios(searchValue);
+        const response = await fetchAllRefugios(searchValue);
+        const data = Array.isArray(response.data) ? response.data : [];
         setAllRefugios(data);
       } catch (error) {
-        console.error("Error fetching refugios:", error);
+        setAllRefugios([]);
       } finally {
         setIsLoading(false);
       }
@@ -24,16 +25,16 @@ export const useRefugios = (searchValue = "") => {
     getRefugios();
   }, [searchValue]);
 
-  // Nuevo useEffect para actualizar los refugios visibles cuando cambia la página o la búsqueda
   useEffect(() => {
-    const startIndex = (currentPage - 1) * ITEMS_POR_PAGE;
-    const endIndex = startIndex + ITEMS_POR_PAGE;
-    setRefugios(allRefugios.slice(startIndex, endIndex));
+    if (Array.isArray(allRefugios)) {
+      const startIndex = (currentPage - 1) * ITEMS_POR_PAGE;
+      const endIndex = startIndex + ITEMS_POR_PAGE;
+      setRefugios(allRefugios.slice(startIndex, endIndex));
+    }
   }, [allRefugios, currentPage]);
 
   const totalPages = Math.ceil(allRefugios.length / ITEMS_POR_PAGE);
 
-  // Nueva función para cambiar de página
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);

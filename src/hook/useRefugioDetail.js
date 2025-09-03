@@ -10,16 +10,19 @@ export const useRefugioDetail = (id) => {
     const getRefugioDetail = async () => {
       if (!id) {
         setIsLoading(false);
-        setError("ID de refugio no válido.");
+        setError("ID de refugio no proporcionado");
         return;
       }
+      
       setIsLoading(true);
       setError(null);
+      
       try {
-        const data = await fetchRefugioById(id);
-        setRefugio(data);
+        const response = await fetchRefugioById(id);
+        setRefugio(response.data);
+        setError(response.error || null);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Error al cargar el refugio');
       } finally {
         setIsLoading(false);
       }
