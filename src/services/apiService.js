@@ -14,80 +14,84 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Manejo de errores unificado
 const handleError = (error) => {
-  return { 
-    data: null, 
-    error: error.response?.data?.message || error.message 
-  };
+  console.error('API Error:', error.response?.data || error.message);
+  throw error.response?.data || error;
 };
 
-// Obtener refugio por ID desde el listado
-export const fetchRefugioById = async (id) => {
-  try {
-    const response = await api.get('/refugios');
-    const refugios = response.data || [];
-    const refugio = refugios.find(r => r._id === id || r.id === id);
-    
-    if (!refugio) {
-      return { data: null, error: 'Refugio no encontrado' };
-    }
-    
-    return { data: refugio };
-  } catch (error) {
-    return handleError(error);
-  }
-};
+// ===== AUTH =====
+export const loginUser = (credentials) => api.post('/api/auth/login', credentials);
+export const registerUser = (userData) => api.post('/api/auth/register', userData);
 
-// Resto de endpoints sin cambios
+// ===== REFUGIOS =====
 export const fetchAllRefugios = (search = '') =>
-  api.get(`/refugios?search=${encodeURIComponent(search)}`).catch(handleError);
+  api.get(`/api/refugios?search=${encodeURIComponent(search)}`).catch(handleError);
+
+export const fetchRefugioById = (id) =>
+  api.get(`/api/refugios/${id}`).catch(handleError);
 
 export const createRefugio = (refugioData) =>
-  api.post('/refugios', refugioData).catch(handleError);
+  api.post('/api/refugios', refugioData).catch(handleError);
 
 export const updateRefugio = (id, refugioData) =>
-  api.put(`/refugios/${id}`, refugioData).catch(handleError);
+  api.put(`/api/refugios/${id}`, refugioData).catch(handleError);
 
 export const deleteRefugio = (id) =>
-  api.delete(`/refugios/${id}`).catch(handleError);
+  api.delete(`/api/refugios/${id}`).catch(handleError);
 
 export const fetchMisRefugios = () =>
-  api.get('/refugios/yo').catch(handleError);
+  api.get('/api/refugios/yo').catch(handleError);
 
-export const getAllMascotas = async (filters = {}) => {
+// ===== MASCOTAS =====
+export const getAllMascotas = (filters = {}) => {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value) params.append(key, value);
   });
-
-  try {
-    const response = await api.get(`/mascotas?${params.toString()}`);
-    return response.data; // ✅ solo los datos
-  } catch (error) {
-    console.error("Error fetching mascotas:", error);
-    return []; // ✅ devuelve array vacío en lugar de objeto con error
-  }
+  return api.get(`/api/mascotas?${params.toString()}`).catch(handleError);
 };
 
-export const getMascotaById = async (id) => {
-  try {
-    const response = await api.get(`/mascotas/${id}`);
-    return response.data; // ✅ devuelve solo los datos
-  } catch (error) {
-    console.error('Error obteniendo mascota:', error);
-    return null;
-  }
-};
+export const getMascotaById = (id) =>
+  api.get(`/api/mascotas/${id}`).catch(handleError);
+
 export const createMascota = (mascotaData) =>
-  api.post('/mascotas', mascotaData).catch(handleError);
+  api.post('/api/mascotas', mascotaData).catch(handleError);
 
 export const updateMascota = (id, mascotaData) =>
-  api.put(`/mascotas/${id}`, mascotaData).catch(handleError);
+  api.put(`/api/mascotas/${id}`, mascotaData).catch(handleError);
 
 export const deleteMascota = (id) =>
-  api.delete(`/mascotas/${id}`).catch(handleError);
+  api.delete(`/api/mascotas/${id}`).catch(handleError);
 
 export const getMascotasByRefugio = (refugioId) =>
-  api.get(`/mascotas?refugio=${refugioId}`).catch(handleError);
+  api.get(`/api/mascotas?refugio=${refugioId}`).catch(handleError);
+
+// ===== SOLICITUDES =====
+// Adopción
+export const createAdoptionRequest = (data) =>
+  api.post('/api/solicitudes/adopcion', data).catch(handleError);
+
+export const getAdoptionRequestsByUser = () =>
+  api.get('/api/solicitudes/adopcion/usuario').catch(handleError);
+
+export const getAdoptionRequestsByRefugio = () =>
+  api.get('/api/solicitudes/adopcion/refugio').catch(handleError);
+
+export const updateAdoptionRequest = (id, estado) =>
+  api.patch(`/api/solicitudes/adopcion/${id}`, { estado }).catch(handleError);
+
+// Dar en adopción
+export const createGiveAdoptionRequest = (data) =>
+  api.post('/api/solicitudes/dar-en-adopcion', data).catch(handleError);
+
+export const getGiveAdoptionRequestsByUser = () =>
+  api.get('/api/solicitudes/dar-en-adopcion/usuario').catch(handleError);
+
+export const getGiveAdoptionRequestsByRefugio = () =>
+  api.get('/api/solicitudes/dar-en-adopcion/refugio').catch(handleError);
+
+export const updateGiveAdoptionRequest = (id, estado) =>
+  api.patch(`/api/solicitudes/dar-en-adopcion/${id}`, { estado }).catch(handleError);
 
 export default api;

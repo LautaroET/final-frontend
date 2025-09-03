@@ -11,14 +11,14 @@ import MascotaDetail from '../pages/MascotaDetail';
 import MascotaCreate from '../pages/MascotaCreate';
 import MascotaEdit from '../pages/MascotaEdit';
 import Authentication from '../pages/Authentication';
-import Registrarse from '../components/Registrarse';
-import IniciarSesion from '../components/IniciarSesion'; 
-import Perfil from '../pages/Perfil'
+import IniciarSesion from '../pages/IniciarSesion';
+import Registrarse from '../pages/Registrarse';
+import Perfil from '../pages/Perfil';
 
 function AppRouter() {
   return (
     <Routes>
-      <Route path='/' element={<Home/>}/>
+      <Route path='/' element={<Home />} />
       <Route path="/refugios" element={<Refugios />} />
       <Route path="/refugios/nuevo" element={<RefugioCreate />} />
       <Route path="/refugios/:id" element={<RefugioDetail />} />
@@ -27,11 +27,10 @@ function AppRouter() {
       <Route path="/mascotas/nuevo" element={<MascotaCreate />} />
       <Route path="/mascotas/:id" element={<MascotaDetail />} />
       <Route path="/mascotas/:id/editar" element={<MascotaEdit />} />
-      <Route path="/auth" element={<Authentication />}>
-        <Route path="iniciar" element={<IniciarSesion />} />
-        <Route path="registrarse" element={<Registrarse />} />
-      </Route>
-      <Route path="/perfil" element={<Perfil/>} /> 
+      <Route path="/auth" element={<Authentication />} />
+      <Route path="/login" element={<IniciarSesion />} />
+      <Route path="/registro" element={<Registrarse />} />
+      <Route path="/perfil" element={<Perfil />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

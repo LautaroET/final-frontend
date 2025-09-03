@@ -1,58 +1,35 @@
-// Authentication.jsx
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
-import Modal from '../components/Modal';
-import IniciarSesion from '../components/IniciarSesion';
-import Registrarse from '../components/Registrarse';
 
 const Authentication = () => {
-  const [modal, setModal] = useState(null); // null | 'login' | 'register'
-  const open = (name) => setModal(name);
-  const close = () => setModal(null);
+  const navigate = useNavigate();
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-amber-50 dark:from-indigo-900 dark:via-blue-900 dark:to-gray-900 p-4">
-      <div className="w-full max-w-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 dark:border-gray-700 overflow-hidden">
-        {/* Hero gradient banner */}
-        <div className="h-28 bg-gradient-to-r from-blue-700 to-indigo-800 dark:from-indigo-800 dark:to-blue-900 flex items-center justify-center">
-          <h2 className="text-2xl font-bold text-white tracking-tight">
-            ¡Bienvenido!
-          </h2>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+      <div className="text-center p-8 max-w-lg w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 transform hover:scale-105 transition-transform duration-300 ease-in-out">
+        <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-6 leading-tight">
+          ¡Bienvenido a <span className="text-blue-600 dark:text-indigo-500">Patitas al Rescate</span>!
+        </h2>
+        <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
+          Encuentra tu compañero ideal o ayuda a una mascota a encontrar un hogar.
+        </p>
 
-        <div className="p-8 space-y-6">
-          <p className="text-center text-gray-700 dark:text-gray-300 text-lg">
-            Accede a <span className="font-semibold text-blue-700 dark:text-blue-400">Patitas al Rescate</span>
-          </p>
-
-          <div className="flex gap-4">
-            <Button
-              onClick={() => open('login')}
-              className="flex-1 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 text-white"
-            >
-              Iniciar Sesión
-            </Button>
-            <Button
-              onClick={() => open('register')}
-              className="flex-1 bg-amber-600 hover:bg-amber-700 focus:ring-4 focus:ring-amber-300 dark:focus:ring-amber-800 text-white"
-            >
-              Registrarse
-            </Button>
-          </div>
-
-          <p className="text-xs text-center text-gray-600 dark:text-gray-400">
-            Al continuar, aceptas nuestros términos y condiciones.
-          </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Button 
+            onClick={() => navigate('/login')} 
+            className="w-full sm:w-auto px-8 py-3 text-lg font-semibold rounded-full bg-blue-600 hover:bg-blue-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-700 shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out"
+          >
+            Iniciar Sesión
+          </Button>
+          <Button 
+            onClick={() => navigate('/registro')} 
+            className="w-full sm:w-auto px-8 py-3 text-lg font-semibold rounded-full bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out"
+          >
+            Registrarse
+          </Button>
         </div>
       </div>
-
-      <Modal isOpen={modal === 'login'} onClose={close}>
-        <IniciarSesion onClose={close} />
-      </Modal>
-
-      <Modal isOpen={modal === 'register'} onClose={close}>
-        <Registrarse onClose={close} />
-      </Modal>
     </div>
   );
 };
