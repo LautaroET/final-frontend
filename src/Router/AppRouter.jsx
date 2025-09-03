@@ -11,8 +11,8 @@ import MascotaDetail from '../pages/MascotaDetail';
 import MascotaCreate from '../pages/MascotaCreate';
 import MascotaEdit from '../pages/MascotaEdit';
 import Authentication from '../pages/Authentication';
-import Registrarse from '../pages/Registrarse';
-import IniciarSesion from '../pages/IniciarSesion'; 
+import Registrarse from '../components/Registrarse';
+import IniciarSesion from '../components/IniciarSesion'; 
 import Perfil from '../pages/Perfil'
 
 function AppRouter() {
