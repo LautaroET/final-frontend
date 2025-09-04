@@ -4,22 +4,30 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import Button from './Button'; 
 
+// src/components/RefugioCreateForm.jsx
 const schema = yup.object().shape({
-  name: yup.string().required('El nombre es obligatorio'),
-  address: yup.string().required('La dirección es obligatoria'),
-  phone: yup.string().matches(/^[0-9]+$/, 'El teléfono solo debe contener números').min(7, 'El teléfono debe tener al menos 7 dígitos').required('El teléfono es obligatorio'),
-  email: yup.string().email('Debe ser un correo electrónico válido').required('El email es obligatorio'),
-  website: yup.string().url('Debe ser una URL válida').required('El sitio web es obligatorio'),
-  description: yup.string().required('La descripción es obligatoria'),
-  capacity: yup.number().positive('La capacidad debe ser un número positivo').integer('La capacidad debe ser un número entero').required('La capacidad es obligatoria').typeError('La capacidad debe ser un número'),
-  image: yup.string().url('Debe ser una URL de imagen válida').required('La URL de la imagen es obligatoria'),
-  adoptionProcess: yup.string().required('El proceso de adopción es obligatorio'),
+  nombre:        yup.string().required('El nombre es obligatorio'),
+  direccion:     yup.string().required('La dirección es obligatoria'),
+  telefono:      yup.string().matches(/^[0-9]+$/, 'Solo números').min(7).required(),
+  email:         yup.string().email().required(),
+  descripcion:   yup.string().max(1000, 'Máx 1000 caracteres'),
+  imagen:        yup.array().of(yup.string().url()).min(1).required(),
+  capacidad:     yup.number().positive().integer().required(),
+
+  // OPCIONALES
+  sitioWeb:      yup.string().url('URL inválida').nullable(true),
+  horariosAtencion: yup.string().nullable(true),
+  facebook:      yup.string().url('URL inválida').nullable(true),
+  instagram:     yup.string().url('URL inválida').nullable(true),
+  twitter:       yup.string().url('URL inválida').nullable(true),
 });
 
 const RefugioCreateForm = ({ onSubmit }) => {
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
   });
+
+  
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-700">
@@ -35,11 +43,11 @@ const RefugioCreateForm = ({ onSubmit }) => {
             <label htmlFor="name" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
             <input
               type="text"
-              id="name"
-              {...register('name')}
+              id="nombre"
+              {...register('nombre')}
               className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+            {errors.nombre && <p className="text-red-500 text-sm mt-1">{errors.nombre.message}</p>}
           </div>
 
           {/* Dirección */}
@@ -47,11 +55,11 @@ const RefugioCreateForm = ({ onSubmit }) => {
             <label htmlFor="address" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dirección</label>
             <input
               type="text"
-              id="address"
-              {...register('address')}
+              id="direccion"
+              {...register('direccion')}
               className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
-            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
+            {errors.direccion && <p className="text-red-500 text-sm mt-1">{errors.direccion.message}</p>}
           </div>
 
           {/* Teléfono */}
@@ -59,11 +67,11 @@ const RefugioCreateForm = ({ onSubmit }) => {
             <label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Teléfono</label>
             <input
               type="tel"
-              id="phone"
-              {...register('phone')}
+              id="telefono"
+              {...register('telefono')}
               className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
+            {errors.telefono && <p className="text-red-500 text-sm mt-1">{errors.telefono.message}</p>}
           </div>
 
           {/* Email */}
@@ -78,28 +86,16 @@ const RefugioCreateForm = ({ onSubmit }) => {
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
           </div>
 
-          {/* Sitio Web */}
-          <div className="flex flex-col">
-            <label htmlFor="website" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sitio Web</label>
-            <input
-              type="url"
-              id="website"
-              {...register('website')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            {errors.website && <p className="text-red-500 text-sm mt-1">{errors.website.message}</p>}
-          </div>
-
           {/* Capacidad */}
           <div className="flex flex-col">
             <label htmlFor="capacity" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Capacidad</label>
             <input
               type="number"
-              id="capacity"
-              {...register('capacity')}
+              id="capacidad"
+              {...register('capacidad')}
               className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
-            {errors.capacity && <p className="text-red-500 text-sm mt-1">{errors.capacity.message}</p>}
+            {errors.capacidad && <p className="text-red-500 text-sm mt-1">{errors.capacidad.message}</p>}
           </div>
         </div>
       </fieldset>
@@ -114,38 +110,89 @@ const RefugioCreateForm = ({ onSubmit }) => {
             <label htmlFor="image" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL de la Imagen</label>
             <input
               type="url"
-              id="image"
-              {...register('image')}
+              id="imagen"
+              {...register('imagen.0')}
               className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
-            {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>}
+            {errors.imagen && <p className="text-red-500 text-sm mt-1">{errors.imagen.message}</p>}
           </div>
 
           {/* Descripción */}
           <div className="flex flex-col">
             <label htmlFor="description" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
             <textarea
-              id="description"
+              id="descripcion"
               rows="4"
-              {...register('description')}
+              {...register('descripcion')}
               className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             ></textarea>
-            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
-          </div>
-          
-          {/* Proceso de Adopción */}
-          <div className="flex flex-col">
-            <label htmlFor="adoptionProcess" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proceso de Adopción</label>
-            <textarea
-              id="adoptionProcess"
-              rows="4"
-              {...register('adoptionProcess')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            ></textarea>
-            {errors.adoptionProcess && <p className="text-red-500 text-sm mt-1">{errors.adoptionProcess.message}</p>}
+            {errors.descripcion && <p className="text-red-500 text-sm mt-1">{errors.descripcion.message}</p>}
           </div>
         </div>
       </fieldset>
+
+      {/* OPCIONALES - collapse simple */}
+        <details className="mb-6 cursor-pointer">
+          <summary className="text-lg font-medium text-gray-800 dark:text-gray-200">
+            Más información (opcional)
+          </summary>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            {/* Sitio web */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">Sitio web</label>
+              <input
+                type="url"
+                {...register('sitioWeb')}
+                className="p-3 border rounded-md dark:bg-gray-700"
+              />
+              {errors.sitioWeb && <p className="text-red-500 text-sm">{errors.sitioWeb.message}</p>}
+            </div>
+
+            {/* Horarios */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">Horarios de atención</label>
+              <input
+                type="text"
+                {...register('horariosAtencion')}
+                className="p-3 border rounded-md dark:bg-gray-700"
+              />
+            </div>
+
+            {/* Facebook */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">Facebook (URL)</label>
+              <input
+                type="url"
+                {...register('facebook')}
+                className="p-3 border rounded-md dark:bg-gray-700"
+              />
+              {errors.facebook && <p className="text-red-500 text-sm">{errors.facebook.message}</p>}
+            </div>
+
+            {/* Instagram */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">Instagram (URL)</label>
+              <input
+                type="url"
+                {...register('instagram')}
+                className="p-3 border rounded-md dark:bg-gray-700"
+              />
+              {errors.instagram && <p className="text-red-500 text-sm">{errors.instagram.message}</p>}
+            </div>
+
+            {/* Twitter */}
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1">Twitter (URL)</label>
+              <input
+                type="url"
+                {...register('twitter')}
+                className="p-3 border rounded-md dark:bg-gray-700"
+              />
+              {errors.twitter && <p className="text-red-500 text-sm">{errors.twitter.message}</p>}
+            </div>
+          </div>
+        </details>
 
       <div className="mt-8 flex justify-end">
         <Button type="submit">

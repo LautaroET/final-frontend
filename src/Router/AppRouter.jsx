@@ -12,6 +12,7 @@ import Authentication from '../pages/Authentication';
 import IniciarSesion from '../pages/IniciarSesion';
 import Registrarse from '../pages/Registrarse';
 import UserProfile from '../pages/UserProfile';
+import RefugioCreate from '../pages/RefugioCreate';
 
 function AppRouter() {
   return (
@@ -28,9 +29,7 @@ function AppRouter() {
         <Route path='/perfil' element={<UserProfile/>}/>
 
       {/* Dashboard protegido */}
-      <Route element={<ProtectedRoute />}>
-      </Route>
-
+      <Route path="/refugios/nuevo" element={<ProtectedRoute><RefugioCreate /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

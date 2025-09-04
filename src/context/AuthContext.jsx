@@ -1,10 +1,10 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import api, { loginUser, registerUser } from '../services/apiService'; // ✅ usa las funciones ya creadas
+import api, { loginUser, registerUser } from '../services/apiService';
 import { roleMapa } from '../utils/roleMapa';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }) => {
 };
 
 /* ----------------------------- hook --------------------------------- */
-export const useAuth = () => {
+export const useAuth = () => { 
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider');
   return ctx;

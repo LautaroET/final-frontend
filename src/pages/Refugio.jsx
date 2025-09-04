@@ -1,26 +1,45 @@
-import React, { useState } from 'react';
-import RefugioList from "../components/RefugioList";
-import Loader from "../components/Loader";
-import SearchInput from "../components/SearchInput";
-import { useRefugios } from "../hook/useRefugios";
-import Pagination from "../components/Pagination";
+import React, { useState, useContext } from 'react';
+import { Link } from 'react-router-dom';
+import RefugioList from '../components/RefugioList';
+import Loader from '../components/Loader';
+import SearchInput from '../components/SearchInput';
+import Pagination from '../components/Pagination';
+import { useRefugios } from '../hook/useRefugios';
+import { AuthContext } from '../context/AuthContext';   // ← tu contexto de auth
+import { can } from '../utils/permissions';           // ← tu helper can()
 
 const Refugios = () => {
-  const [searchValue, setSearchValue] = useState("");
-  const { refugios, allRefugios, isLoading, totalPages, currentPage, handlePageChange } = useRefugios(searchValue);
+  const [searchValue, setSearchValue] = useState('');
+  const { refugios, allRefugios, isLoading, totalPages, currentPage, handlePageChange } =
+    useRefugios(searchValue);
+
+  const { user } = useContext(AuthContext); // { _id, roleId, permissions, ... }
+
+  const puedeCrear = can(user, 'refugios:create');
 
   return (
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen py-8 transition-colors duration-700 rounded-lg shadow-md">
       <div className="container mx-auto px-4 md:px-8">
-        
-        {/* Sección de cabecera con el título */}
+        {/* Cabecera + botón crear (condicional) */}
         <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
           <h1 className="text-4xl font-extrabold text-indigo-700 dark:text-blue-400 text-center sm:text-left tracking-tight">
             Encuentra tu Próximo Compañero
           </h1>
+
+          {puedeCrear && (
+            <Link
+              to="/refugios/nuevo"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg
+                        hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500
+                        transition-colors"
+            >
+              <i className="bi bi-plus-circle" />
+              Crear refugio
+            </Link>
+          )}
         </div>
 
-        {/* Sección del buscador, centrada y con un ancho máximo */}
+        {/* Buscador centrado */}
         <div className="flex justify-center mb-12">
           <div className="w-full max-w-xl">
             <SearchInput onSearchChange={setSearchValue} />
@@ -31,14 +50,11 @@ const Refugios = () => {
           <Loader />
         ) : (
           <>
-            <RefugioList 
-              refugios={refugios} 
-              allRefugios={allRefugios} 
-            />
-            <Pagination 
-              totalPages={totalPages} 
-              currentPage={currentPage} 
-              onPageChange={handlePageChange} 
+            <RefugioList refugios={refugios} allRefugios={allRefugios} />
+            <Pagination
+              totalPages={totalPages}
+              currentPage={currentPage}
+              onPageChange={handlePageChange}
             />
           </>
         )}

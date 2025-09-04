@@ -1,15 +1,36 @@
+// src/pages/RefugioCreate.jsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import RefugioCreateForm from '../components/RefugioCreateForm';
 import { createRefugio } from '../services/apiService';
-import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const RefugioCreate = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // ✅ usuario logueado
 
   const handleSubmit = async (data) => {
+    const payload = {
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      imagen: data.imagen[0], // si solo usas una imagen
+      direccion: data.direccion,
+      telefono: data.telefono,
+      email: data.email,
+      capacidad: data.capacidad,
+      sitioWeb: data.sitioWeb || undefined,
+      horariosAtencion: data.horariosAtencion || undefined,
+      redesSociales: {
+        facebook: data.facebook || undefined,
+        instagram: data.instagram || undefined,
+        twitter: data.twitter || undefined,
+      },
+      userId: user._id, // ✅ ID del usuario logueado
+    };
+
     try {
-      await createRefugio(data);
+      await createRefugio(payload);
       toast.success('Refugio creado exitosamente!');
       navigate('/refugios');
     } catch (error) {
