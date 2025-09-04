@@ -1,4 +1,3 @@
-// useMascotaDetail.js
 import { useState, useEffect } from 'react';
 import { getMascotaById, fetchRefugioById } from '../services/apiService';
 
@@ -18,25 +17,36 @@ export const useMascotaDetail = (id) => {
       setError(null);
       try {
         const data = await getMascotaById(id);
-        if (!data) {
+        if (!data || !data.data) {
           setError('No se pudo cargar la mascota.');
           return;
         }
 
-        const refugioRes = await fetchRefugioById(data.refugio);
-        const refugio = refugioRes.data;
+        const mascotaData = data.data;
+        let refugio = null;
+
+        // ✅ Solución: Verifica si el ID del refugio existe antes de hacer la llamada a la API
+        if (mascotaData.refugio) {
+          try {
+            const refugioRes = await fetchRefugioById(mascotaData.refugio);
+            refugio = refugioRes.data;
+          } catch (refugioError) {
+            console.error("Error fetching refugio:", refugioError);
+            // Continúa sin el refugio si hay un error
+          }
+        }
 
         const mapped = {
-          nombre: data.nombre ?? 'Sin nombre',
-          edad: data.edad ?? null,
-          genero: data.genero ?? null,
-          tamano: data.tamano ?? null,
-          descripcion: data.descripcion ?? null,
-          caracteristicas: data.caracteristicas ?? [],
-          estado: data.estado ?? 'disponible',
-          imagen: data.imagen ?? [],
+          nombre: mascotaData.nombre ?? 'Sin nombre',
+          edad: mascotaData.edad ?? null,
+          genero: mascotaData.genero ?? null,
+          tamano: mascotaData.tamano ?? null,
+          descripcion: mascotaData.descripcion ?? null,
+          caracteristicas: mascotaData.caracteristicas ?? [],
+          estado: mascotaData.estado ?? 'disponible',
+          imagen: mascotaData.imagen ?? [],
           refugio,
-          raza: data.raza ?? null,
+          raza: mascotaData.raza ?? null,
         };
 
         setMascota(mapped);

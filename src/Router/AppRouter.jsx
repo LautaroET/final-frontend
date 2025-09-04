@@ -13,6 +13,9 @@ import IniciarSesion from '../pages/IniciarSesion';
 import Registrarse from '../pages/Registrarse';
 import UserProfile from '../pages/UserProfile';
 import RefugioCreate from '../pages/RefugioCreate';
+import RefugioEdit from '../pages/RefugioEdit'
+import MascotaCreate from '../pages/MascotaCreate';
+import MascotaEdit from '../pages/MascotaEdit';
 
 function AppRouter() {
   return (
@@ -30,6 +33,9 @@ function AppRouter() {
 
       {/* Dashboard protegido */}
       <Route path="/refugios/nuevo" element={<ProtectedRoute><RefugioCreate /></ProtectedRoute>} />
+      <Route path="/refugios/:id/editar" element={<ProtectedRoute><RefugioEdit /></ProtectedRoute>} />
+      <Route path="/refugios/:id/mascotas/nueva" element={<ProtectedRoute><MascotaCreate /></ProtectedRoute>} />
+      <Route path="/mascotas/:id/editar" element={<ProtectedRoute><MascotaEdit /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

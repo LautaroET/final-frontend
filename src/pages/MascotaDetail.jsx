@@ -1,19 +1,41 @@
-// MascotaDetail.jsx
+// src/pages/MascotaDetail.jsx
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Loader from '../components/Loader';
 import Button from '../components/Button';
 import { useMascotaDetail } from '../hook/useMascotaDetail';
+import { useAuth } from '../context/AuthContext';
+import { can } from '../utils/permissions';
+import { deleteMascota } from '../services/apiService';
 
 const MascotaDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { mascota, isLoading, error } = useMascotaDetail(id);
+  const { user } = useAuth();
+
+  const puedeEditar = can(user, 'mascotas:update');
+  const puedeEliminar = can(user, 'mascotas:delete');
+
+  const handleEditar = () => navigate(`/mascotas/${id}/editar`);
+
+  const handleEliminar = async () => {
+    if (!window.confirm('¿Seguro que deseas eliminar esta mascota?')) return;
+    try {
+      await deleteMascota(id);
+      toast.success('Mascota eliminada correctamente');
+      navigate(-1); // vuelve atrás
+    } catch (err) {
+      toast.error('Error al eliminar mascota');
+      console.error(err);
+    }
+  };
 
   if (isLoading) return <Loader />;
   if (error)
     return (
-      <div className="min-h-screen flex items-center justify-center text-center bg-gray-100 dark:bg-gray-900 transition-colors duration-700">
+      <div className="min-h-screen flex items-center justify-center text-center bg-gray-100 dark:bg-gray-900">
         <div className="p-8 rounded-lg bg-white dark:bg-gray-800 shadow-xl">
           <p className="text-red-500 text-xl font-semibold mb-4">{error}</p>
           <Button onClick={() => navigate(-1)}>Volver</Button>
@@ -22,37 +44,43 @@ const MascotaDetail = () => {
     );
   if (!mascota) return <p className="text-center text-gray-600 dark:text-gray-400">Mascota no encontrada.</p>;
 
-  // ✅ Reconstruye la URL de la imagen desde el objeto raro
   const getImageUrl = () => {
-    if (!mascota.imagen || !Array.isArray(mascota.imagen) || !mascota.imagen[0]) return '/placeholder.jpg';
-    const item = mascota.imagen[0];
-
-    // Caso 1: objeto con claves numéricas
-    if (typeof item === 'object' && item !== null) {
-      const keys = Object.keys(item)
-        .filter(k => !isNaN(k))
-        .sort((a, b) => Number(a) - Number(b));
-      return keys.map(k => item[k]).join('') || '/placeholder.jpg';
+    if (!mascota.imagen) return '/placeholder.jpg';
+    if (typeof mascota.imagen === 'string') return mascota.imagen;
+    if (Array.isArray(mascota.imagen) && mascota.imagen[0]) {
+      const item = mascota.imagen[0];
+      if (typeof item === 'string') return item;
+      if (item?.url) return item.url;
     }
-
-    // Caso 2: string directo
-    if (typeof item === 'string') return item;
-
-    // Caso 3: objeto con propiedad url
-    if (typeof item === 'object' && item.url) return item.url;
-
     return '/placeholder.jpg';
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-gray-100 dark:bg-gray-900 transition-colors duration-700">
+    <div className="min-h-screen p-4 md:p-8 bg-gray-100 dark:bg-gray-900">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-start mb-6">
+        <div className="flex justify-between items-center mb-6">
           <Button onClick={() => navigate(-1)} className="mb-4 md:mb-0">
             <i className="bi bi-arrow-left-circle-fill mr-2"></i>Volver
           </Button>
+
+          {/* Botones solo si tiene permisos */}
+          {(puedeEditar || puedeEliminar) && (
+            <div className="flex gap-3">
+              {puedeEditar && (
+                <Button onClick={handleEditar} className="bg-yellow-500 hover:bg-yellow-600">
+                  <i className="bi bi-pencil-square mr-2"></i>Editar
+                </Button>
+              )}
+              {puedeEliminar && (
+                <Button onClick={handleEliminar} className="bg-red-500 hover:bg-red-600">
+                  <i className="bi bi-trash-fill mr-2"></i>Eliminar
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
+        {/* Tarjeta principal */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden dark:bg-gray-800 mb-8">
           <img
             src={getImageUrl()}
@@ -83,11 +111,10 @@ const MascotaDetail = () => {
               </div>
             </div>
 
+            {/* Información básica */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-indigo-600 dark:text-blue-300 mb-4">
-                  Información básica
-                </h2>
+                <h2 className="text-2xl font-bold text-indigo-600 dark:text-blue-300 mb-4">Información básica</h2>
 
                 <div className="flex items-center">
                   <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center mr-3">
@@ -132,10 +159,9 @@ const MascotaDetail = () => {
                 </div>
               </div>
 
+              {/* Información del refugio */}
               <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-indigo-600 dark:text-blue-300 mb-4">
-                  Información del refugio
-                </h2>
+                <h2 className="text-2xl font-bold text-indigo-600 dark:text-blue-300 mb-4">Información del refugio</h2>
 
                 {mascota.refugio ? (
                   <>
@@ -170,13 +196,12 @@ const MascotaDetail = () => {
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Información del refugio no disponible.
-                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Información del refugio no disponible.</p>
                 )}
               </div>
             </div>
 
+            {/* Descripción */}
             {mascota.descripcion && (
               <div className="mb-6">
                 <h3 className="text-xl font-semibold text-indigo-600 dark:text-blue-300 mb-3">Descripción</h3>
@@ -184,6 +209,7 @@ const MascotaDetail = () => {
               </div>
             )}
 
+            {/* CTA adopción */}
             {mascota.refugio && (
               <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-6 mt-8">
                 <h3 className="text-xl font-semibold text-indigo-700 dark:text-blue-400 mb-4">

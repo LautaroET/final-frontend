@@ -1,200 +1,178 @@
-import React, { useEffect } from 'react';
+// src/components/RefugioEditForm.jsx
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-import Button from './Button'; 
-import { fetchRefugioById, updateRefugio } from '../services/apiService';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { fetchMiRefugio, updateMiRefugio } from '../services/apiService';
 import Loader from './Loader';
 
-// Esquema de validación para el formulario
-const schema = yup.object().shape({
-  name: yup.string().required('El nombre es obligatorio'),
-  address: yup.string().required('La dirección es obligatoria'),
-  phone: yup.string().matches(/^[0-9]+$/, 'El teléfono solo debe contener números').min(7, 'El teléfono debe tener al menos 7 dígitos').required('El teléfono es obligatorio'),
-  email: yup.string().email('Debe ser un correo electrónico válido').required('El email es obligatorio'),
-  website: yup.string().url('Debe ser una URL válida').required('El sitio web es obligatorio'),
-  description: yup.string().required('La descripción es obligatoria'),
-  capacity: yup.number().positive('La capacidad debe ser un número positivo').integer('La capacidad debe ser un número entero').required('La capacidad es obligatoria').typeError('La capacidad debe ser un número'),
-  image: yup.string().url('Debe ser una URL de imagen válida').required('La URL de la imagen es obligatoria'),
-  adoptionProcess: yup.string().required('El proceso de adopción es obligatorio'),
+const schema = yup.object({
+  nombre: yup.string().required('Nombre obligatorio'),
+  direccion: yup.string().required('Dirección obligatoria'),
+  telefono: yup.string().min(7, 'Mín 7 números').required('Teléfono obligatorio'),
+  email: yup.string().email('Email inválido').required('Email obligatorio'),
+  imagen: yup.string().url('URL inválida').required('Imagen obligatoria'),
+  capacidad: yup.number().positive().integer().required('Capacidad obligatoria'),
+  descripcion: yup.string().default(''),
+  sitioWeb: yup.string().url('URL inválida').nullable(true),
+  horariosAtencion: yup.string().nullable(true),
+  facebook: yup.string().url('URL inválida').nullable(true),
+  instagram: yup.string().url('URL inválida').nullable(true),
+  twitter: yup.string().url('URL inválida').nullable(true),
 });
 
-const RefugioEditForm = () => {
+export default function RefugioEditForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
-    resolver: yupResolver(schema),
-  });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({ resolver: yupResolver(schema) });
 
   useEffect(() => {
-    const fetchRefugioData = async () => {
+    (async () => {
       try {
-        const data = await fetchRefugioById(id);
-        reset(data);
-        setIsLoading(false);
-      } catch (error) {
-        toast.error("Error al cargar los datos del refugio.");
-        console.error(error);
-        setIsLoading(false);
-      }
-    };
-    
-    fetchRefugioData();
-  }, [id, reset]);
+        // usamos el NUEVO endpoint que SÍ existe
+        const { data } = await fetchMiRefugio();
+        console.log('📥 Mi refugio:', data);
 
-  const onSubmit = async (data) => {
+        const mapped = {
+          nombre: data.nombre || '',
+          direccion: data.direccion || '',
+          telefono: data.telefono || '',
+          email: data.email || '',
+          descripcion: data.descripcion || '',
+          imagen: data.imagen || '',
+          capacidad: data.capacidad || 0,
+          sitioWeb: data.sitioWeb || '',
+          horariosAtencion: data.horariosAtencion || '',
+          facebook: data.redesSociales?.facebook || '',
+          instagram: data.redesSociales?.instagram || '',
+          twitter: data.redesSociales?.twitter || '',
+        };
+        reset(mapped);
+      } catch (e) {
+        toast.error('No se pudo cargar tu refugio');
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [reset]);
+
+  const onSubmit = async (values) => {
+    console.log('🔥 onSubmit disparado', values);
+    const payload = {
+      ...values,
+      redesSociales: {
+        facebook: values.facebook || undefined,
+        instagram: values.instagram || undefined,
+        twitter: values.twitter || undefined,
+      },
+    };
+    console.log('📦 Payload a enviar', payload);
+
     try {
-      await updateRefugio(id, data);
-      toast.success('Refugio actualizado exitosamente!');
-      navigate('/refugios');
-    } catch (error) {
-      toast.error('Hubo un error al actualizar el refugio.');
-      console.error(error);
+      await updateMiRefugio(payload); // ← endpoint que SÍ existe
+      toast.success('Refugio actualizado');
+      navigate(`/refugios/${id}`);
+    } catch (err) {
+      console.error('❌ Error actualizando', err);
+      toast.error('Error al actualizar');
     }
   };
 
-  if (isLoading) {
-    return <Loader />;
-  }
+  if (loading) return <Loader />;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-700">
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6">Editar Refugio</h2>
-      
-      <fieldset className="border border-gray-300 dark:border-gray-600 p-4 rounded-md mb-6">
-        <legend className="text-lg font-medium text-gray-800 dark:text-gray-200 px-2">
-          Información Básica del Refugio
-        </legend>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Nombre */}
-          <div className="flex flex-col">
-            <label htmlFor="name" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
-            <input
-              type="text"
-              id="name"
-              {...register('name')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
-          </div>
 
-          {/* Dirección */}
-          <div className="flex flex-col">
-            <label htmlFor="address" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dirección</label>
-            <input
-              type="text"
-              id="address"
-              {...register('address')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
-          </div>
+      {/* Errores visibles */}
+      {/* Errores visibles (sin circular) */}
+      {Object.keys(errors).length > 0 && (
+        <ul className="text-xs text-red-500 mb-4">
+          {Object.entries(errors).map(([field, { message }]) => (
+            <li key={field}>{field}: {message}</li>
+          ))}
+        </ul>
+      )}
 
-          {/* Teléfono */}
-          <div className="flex flex-col">
-            <label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Teléfono</label>
-            <input
-              type="tel"
-              id="phone"
-              {...register('phone')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
-          </div>
+      {/* Nombre */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Nombre</label>
+        <input {...register('nombre')} className="w-full p-3 border rounded-md dark:bg-gray-700" />
+        {errors.nombre && <p className="text-red-500 text-sm">{errors.nombre.message}</p>}
+      </div>
 
-          {/* Email */}
-          <div className="flex flex-col">
-            <label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <input
-              type="email"
-              id="email"
-              {...register('email')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
-          </div>
+      {/* Dirección */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Dirección</label>
+        <input {...register('direccion')} className="w-full p-3 border rounded-md dark:bg-gray-700" />
+        {errors.direccion && <p className="text-red-500 text-sm">{errors.direccion.message}</p>}
+      </div>
 
-          {/* Sitio Web */}
-          <div className="flex flex-col">
-            <label htmlFor="website" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sitio Web</label>
-            <input
-              type="url"
-              id="website"
-              {...register('website')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            {errors.website && <p className="text-red-500 text-sm mt-1">{errors.website.message}</p>}
-          </div>
+      {/* Teléfono */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Teléfono</label>
+        <input {...register('telefono')} className="w-full p-3 border rounded-md dark:bg-gray-700" />
+        {errors.telefono && <p className="text-red-500 text-sm">{errors.telefono.message}</p>}
+      </div>
 
-          {/* Capacidad */}
-          <div className="flex flex-col">
-            <label htmlFor="capacity" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Capacidad</label>
-            <input
-              type="number"
-              id="capacity"
-              {...register('capacity')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            {errors.capacity && <p className="text-red-500 text-sm mt-1">{errors.capacity.message}</p>}
-          </div>
+      {/* Email */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Email</label>
+        <input type="email" {...register('email')} className="w-full p-3 border rounded-md dark:bg-gray-700" />
+        {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+      </div>
 
-          {/* URL de la imagen */}
-          <div className="flex flex-col col-span-1 md:col-span-2">
-            <label htmlFor="image" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL de la Imagen</label>
-            <input
-              type="url"
-              id="image"
-              {...register('image')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-            {errors.image && <p className="text-red-500 text-sm mt-1">{errors.image.message}</p>}
-          </div>
+      {/* Imagen */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">URL imagen</label>
+        <input {...register('imagen')} className="w-full p-3 border rounded-md dark:bg-gray-700" />
+        {errors.imagen && <p className="text-red-500 text-sm">{errors.imagen.message}</p>}
+      </div>
+
+      {/* Capacidad */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Capacidad</label>
+        <input type="number" {...register('capacidad')} className="w-full p-3 border rounded-md dark:bg-gray-700" />
+        {errors.capacidad && <p className="text-red-500 text-sm">{errors.capacidad.message}</p>}
+      </div>
+
+      {/* Descripción */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Descripción</label>
+        <textarea {...register('descripcion')} rows={4} className="w-full p-3 border rounded-md dark:bg-gray-700" />
+      </div>
+
+      {/* Opcionales collapse */}
+      <details className="mb-6 cursor-pointer">
+        <summary className="text-lg font-medium text-gray-800 dark:text-gray-200">Más información (opcional)</summary>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div className="flex flex-col"><label className="text-sm font-medium mb-1">Sitio web</label><input {...register('sitioWeb')} className="p-3 border rounded-md dark:bg-gray-700" /></div>
+          <div className="flex flex-col"><label className="text-sm font-medium mb-1">Horarios</label><input {...register('horariosAtencion')} className="p-3 border rounded-md dark:bg-gray-700" /></div>
+          <div className="flex flex-col"><label className="text-sm font-medium mb-1">Facebook</label><input {...register('facebook')} className="p-3 border rounded-md dark:bg-gray-700" /></div>
+          <div className="flex flex-col"><label className="text-sm font-medium mb-1">Instagram</label><input {...register('instagram')} className="p-3 border rounded-md dark:bg-gray-700" /></div>
+          <div className="flex flex-col"><label className="text-sm font-medium mb-1">Twitter</label><input {...register('twitter')} className="p-3 border rounded-md dark:bg-gray-700" /></div>
         </div>
-      </fieldset>
+      </details>
 
-      <fieldset className="border border-gray-300 dark:border-gray-600 p-4 rounded-md mb-6">
-        <legend className="text-lg font-medium text-gray-800 dark:text-gray-200 px-2">
-          Información Adicional
-        </legend>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Descripción */}
-          <div className="flex flex-col col-span-1 md:col-span-2">
-            <label htmlFor="description" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
-            <textarea
-              id="description"
-              rows="4"
-              {...register('description')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            ></textarea>
-            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
-          </div>
-          
-          {/* Proceso de Adopción */}
-          <div className="flex flex-col col-span-1 md:col-span-2">
-            <label htmlFor="adoptionProcess" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Proceso de Adopción</label>
-            <textarea
-              id="adoptionProcess"
-              rows="4"
-              {...register('adoptionProcess')}
-              className="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            ></textarea>
-            {errors.adoptionProcess && <p className="text-red-500 text-sm mt-1">{errors.adoptionProcess.message}</p>}
-          </div>
-        </div>
-      </fieldset>
-      
-      <div className="mt-8 flex justify-end">
-        <Button type="submit">
+      {/* Botón nativo submit */}
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
           Guardar Cambios
-        </Button>
+        </button>
       </div>
     </form>
   );
-};
-
-export default RefugioEditForm;
+}

@@ -1,4 +1,3 @@
-// useMascotas.js
 import { useState, useEffect } from "react";
 import { getAllMascotas } from "../services/apiService";
 
@@ -15,8 +14,14 @@ export const useMascotas = (searchValue = "") => {
     setIsLoading(true);
     const getMascotas = async () => {
       try {
-        const data = await getAllMascotas(); // sin filtros
-        setAllMascotas(Array.isArray(data) ? data : []);
+        const response = await getAllMascotas(); // Se obtiene el objeto de respuesta completo
+        console.log("API Response:", response); // Revisa esto en tu consola
+        
+        // ✅ Solución: Accede directamente al array de datos
+        const fetchedMascotas = response.data || [];
+        
+        setAllMascotas(Array.isArray(fetchedMascotas) ? fetchedMascotas : []);
+        
       } catch (error) {
         console.error("Error fetching mascotas:", error);
         setAllMascotas([]);

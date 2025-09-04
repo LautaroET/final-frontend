@@ -34,14 +34,12 @@ export const fetchRefugioById = (id) =>
 export const createRefugio = (refugioData) =>
   api.post('/api/refugios', refugioData).catch(handleError);
 
-export const updateRefugio = (id, refugioData) =>
-  api.put(`/api/refugios/${id}`, refugioData).catch(handleError);
+export const updateMiRefugio = (data) => api.put('/api/refugios/yo', data);
 
 export const deleteRefugio = (id) =>
   api.delete(`/api/refugios/${id}`).catch(handleError);
 
-export const fetchMisRefugios = () =>
-  api.get('/api/refugios/yo').catch(handleError);
+export const fetchMiRefugio = () => api.get('/api/refugios/yo/mi');
 
 // ===== MASCOTAS =====
 export const getAllMascotas = (filters = {}) => {

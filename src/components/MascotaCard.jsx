@@ -1,4 +1,5 @@
-// MascotaCard.jsx
+// src/components/MascotaCard.jsx
+
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FavoritosContext } from '../context/FavoritosContext';
@@ -23,19 +24,10 @@ const MascotaCard = ({ mascota }) => {
 
   const ariaLabel = isFavorite ? 'Eliminar de favoritos' : 'Agregar a favoritos';
 
-  // ---- helpers para campos seguros ----
+  // ✅ Solución: Simplificar la función para que maneje un string
   const getImageUrl = (img) => {
-    if (!img || !Array.isArray(img) || !img[0]) return '/placeholder.jpg';
-    const val = img[0];
-    if (typeof val === 'string') return val;
-    if (typeof val === 'object') {
-      const keys = Object.keys(val)
-        .filter((k) => !isNaN(k))
-        .sort((a, b) => Number(a) - Number(b));
-      const url = keys.map((k) => val[k]).join('');
-      return url || '/placeholder.jpg';
-    }
-    return '/placeholder.jpg';
+    // Si la imagen es una URL válida, la devuelve. Si no, usa el placeholder.
+    return img && typeof img === 'string' ? img : '/placeholder.jpg';
   };
 
   return (
@@ -66,7 +58,7 @@ const MascotaCard = ({ mascota }) => {
         {/* Estado */}
         <div
           className={`absolute bottom-0 left-0 px-4 py-2 rounded-tr-2xl text-sm font-bold text-white uppercase tracking-wider
-            ${mascota.estado === 'En adopción' ? 'bg-green-500' : 'bg-yellow-500'}`}
+            ${mascota.estado === 'disponible' ? 'bg-green-500' : 'bg-yellow-500'}`}
         >
           {mascota.estado ?? 'Disponible'}
         </div>
