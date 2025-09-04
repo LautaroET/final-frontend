@@ -1,9 +1,11 @@
-import React from 'react';
+// src/pages/IniciarSesion.jsx
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Button from '../components/Button';
@@ -19,32 +21,43 @@ const schema = yup.object().shape({
 const IniciarSesion = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
-    resolver: yupResolver(schema),
-  });
+  } = useForm({ resolver: yupResolver(schema) });
 
   const onSubmit = async (data) => {
+    setLoading(true);
+    const toastId = toast.loading('Iniciando sesión...');
+
     try {
-      const res = await login(data);
-      if (res.success) {
-        MySwal.fire({
+      const res = await login(data.email, data.password);
+      toast.dismiss(toastId);
+
+      if (res) {
+        await MySwal.fire({
           icon: 'success',
           title: '¡Bienvenido de nuevo!',
           text: 'Has iniciado sesión con éxito.',
           showConfirmButton: false,
           timer: 2000,
-          didClose: () => {
-            navigate('/perfil');
-          },
+          didClose: () => navigate('/perfil'),
         });
+      } else {
+        throw new Error('Credenciales incorrectas');
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.dismiss(toastId);
+      MySwal.fire({
+        icon: 'error',
+        title: 'Error al iniciar sesión',
+        text: error?.response?.data?.message || error.message || 'Revisa tus datos e inténtalo de nuevo.',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -89,8 +102,8 @@ const IniciarSesion = () => {
             {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
           </div>
 
-          <Button type="submit" className="w-full">
-            Iniciar Sesión
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? 'Iniciando...' : 'Iniciar Sesión'}
           </Button>
 
           <div className="text-center mt-6">
@@ -106,6 +119,8 @@ const IniciarSesion = () => {
             </span>
           </div>
         </form>
+
+        <ToastContainer position="bottom-center" autoClose={2000} />
       </div>
     </div>
   );

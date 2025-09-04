@@ -1,9 +1,11 @@
-import React from 'react';
+// src/pages/Registrarse.jsx
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import Button from '../components/Button';
@@ -11,86 +13,74 @@ import { useAuth } from '../context/AuthContext';
 
 const MySwal = withReactContent(Swal);
 
+/* ---------- validaciones ---------- */
 const schema = yup.object().shape({
-  username: yup.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres.').required('El nombre de usuario es obligatorio.'),
-  nombre: yup.string().required('El nombre es obligatorio.'),
-  apellido: yup.string().required('El apellido es obligatorio.'),
-  email: yup.string().email('Ingresa un correo válido.').required('El correo es obligatorio.'),
-  password: yup.string().min(6, 'La contraseña debe tener al menos 6 caracteres.').required('La contraseña es obligatoria.'),
+  username: yup.string().min(3, 'Mínimo 3 caracteres').required('Usuario obligatorio'),
+  nombre: yup.string().required('Nombre obligatorio'),
+  apellido: yup.string().required('Apellido obligatorio'),
+  email: yup.string().email('Correo inválido').required('Correo obligatorio'),
+  password: yup.string().min(6, 'Mínimo 6 caracteres').required('Contraseña obligatoria'),
   confirmPassword: yup
     .string()
-    .oneOf([yup.ref('password')], 'Las contraseñas no coinciden.')
-    .required('Confirma tu contraseña.'),
-  dia: yup
-    .number()
-    .typeError('Día inválido.')
-    .min(1, 'El día debe estar entre 1 y 31.')
-    .max(31, 'El día debe estar entre 1 y 31.')
-    .required('El día es obligatorio.'),
-  mes: yup
-    .number()
-    .typeError('Mes inválido.')
-    .min(1, 'El mes debe estar entre 1 y 12.')
-    .max(12, 'El mes debe estar entre 1 y 12.')
-    .required('El mes es obligatorio.'),
+    .oneOf([yup.ref('password')], 'Las contraseñas no coinciden')
+    .required('Confirma tu contraseña'),
+  dia: yup.number().min(1).max(31).required('Día obligatorio'),
+  mes: yup.number().min(1).max(12).required('Mes obligatorio'),
   anio: yup
     .number()
-    .typeError('Año inválido.')
-    .min(1900, 'El año debe ser válido.')
-    .max(new Date().getFullYear(), 'El año no puede ser futuro.')
-    .required('El año es obligatorio.'),
+    .min(1900)
+    .max(new Date().getFullYear(), 'Año no puede ser futuro')
+    .required('Año obligatorio'),
 });
 
+/* ---------- componente ---------- */
 const Registrarse = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const {
     register: field,
     handleSubmit,
     formState: { errors },
-  } = useForm({
-    resolver: yupResolver(schema),
-  });
+  } = useForm({ resolver: yupResolver(schema) });
 
   const onSubmit = async (data) => {
+    setLoading(true);
+
     const { confirmPassword: _, ...rest } = data;
 
     const userData = {
       username: rest.username,
       email: rest.email,
       password: rest.password,
-      nombreCompleto: {
-        nombre: rest.nombre,
-        apellido: rest.apellido,
-      },
-      fechaNacimiento: {
-        dia: rest.dia,
-        mes: rest.mes,
-        anio: rest.anio,
-      },
+      nombreCompleto: { nombre: rest.nombre, apellido: rest.apellido },
+      fechaNacimiento: { dia: rest.dia, mes: rest.mes, anio: rest.anio },
     };
 
-    const promise = register(userData);
+    const toastId = toast.loading('Registrando...');
 
-    toast.promise(promise, {
-      pending: 'Creando tu cuenta...',
-      success: '¡Registro exitoso!',
-      error: 'Ocurrió un error al registrarse. Inténtalo de nuevo.',
-    }).then((res) => {
-      if (res?.success) {
-        MySwal.fire({
-          icon: 'success',
-          title: '¡Cuenta creada!',
-          text: '¡Bienvenido a Patitas al Rescate!',
-          showConfirmButton: false,
-          timer: 2000,
-          didClose: () => {
-            navigate('/perfil');
-          },
-        });
-      }
-    });
+    const res = await register(userData);
+    toast.dismiss(toastId);
+
+    setLoading(false);
+
+    if (res?.success) {
+      await MySwal.fire({
+        icon: 'success',
+        title: '¡Cuenta creada!',
+        text: '¡Bienvenido a Patitas al Rescate!',
+        showConfirmButton: false,
+        timer: 2000,
+      });
+      navigate('/perfil');
+    } else {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Error al registrarse',
+        text: res?.error || 'Intenta de nuevo más tarde',
+      });
+    }
   };
 
   return (
@@ -106,6 +96,7 @@ const Registrarse = () => {
         <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6 text-center">Registrarse</h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          {/* Campos del formulario (igual que antes) */}
           <fieldset className="border border-gray-300 dark:border-gray-600 rounded-md p-4">
             <legend className="px-2 text-lg font-semibold text-gray-800 dark:text-white">Datos de cuenta</legend>
             <div className="space-y-4 mt-2">
@@ -163,7 +154,9 @@ const Registrarse = () => {
             </div>
           </fieldset>
 
-          <Button type="submit" className="w-full">Registrarse</Button>
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? 'Registrando...' : 'Registrarse'}
+          </Button>
 
           <div className="text-center">
             <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -178,6 +171,8 @@ const Registrarse = () => {
             </span>
           </div>
         </form>
+
+        <ToastContainer position="bottom-center" autoClose={2000} />
       </div>
     </div>
   );

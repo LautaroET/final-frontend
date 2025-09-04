@@ -1,81 +1,103 @@
-// AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// src/context/AuthContext.jsx
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { registerUser, loginUser } from '../services/apiService';
+import api, { loginUser, registerUser } from '../services/apiService'; // ✅ usa las funciones ya creadas
+import { roleMapa } from '../utils/roleMapa';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
+  /* ------------------------ restaurar sesión ------------------------ */
   useEffect(() => {
     const token = sessionStorage.getItem('token');
-    if (token) {
+    const saved = sessionStorage.getItem('user');
+
+    if (token && saved) {
       try {
-        const decoded = jwtDecode(token);
-        setUser({
-          id: decoded.id || decoded.sub,
-          username: decoded.username,
-          email: decoded.email,
-          tipo: decoded.tipo || 'común',
-          role: decoded.tipo || 'común',
-        });
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        setUser(JSON.parse(saved));
       } catch {
-        sessionStorage.removeItem('token');
+        sessionStorage.clear();
       }
     }
-    setLoading(false);
   }, []);
 
-  const login = async ({ email, password }) => {
+  /* ----------------------------- login ------------------------------ */
+  const login = async (email, password) => {
     try {
       const { data } = await loginUser({ email, password });
-      const { token } = data;
+      const { token, user: rawUser } = data;
+
       const decoded = jwtDecode(token);
-      setUser({
-        id: decoded.id || decoded.sub,
-        username: decoded.username,
-        email: decoded.email,
-        tipo: decoded.tipo || 'común',
-        role: decoded.tipo || 'común',
-      });
+      const roleData = roleMapa[decoded.role];
+      if (!roleData) throw new Error('Rol desconocido');
+
+      const userWithRole = {
+        ...rawUser,
+        role: roleData.name,
+        permissions: roleData.permissions,
+      };
+
+      setUser(userWithRole);
       sessionStorage.setItem('token', token);
-      return { success: true, message: 'Inicio de sesión exitoso' };
-    } catch (error) {
-      const message = error?.response?.data?.message || 'Credenciales incorrectas';
-      throw new Error(message);
+      sessionStorage.setItem('user', JSON.stringify(userWithRole));
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      return { token, user: userWithRole };
+    } catch (err) {
+      console.error('Login error', err);
+      return null;
     }
   };
 
+  /* ---------------------------- register ---------------------------- */
   const register = async (userData) => {
     try {
       const { data } = await registerUser(userData);
-      const { token } = data;
+      const { token, user: rawUser } = data;
+
       const decoded = jwtDecode(token);
-      setUser({
-        id: decoded.id || decoded.sub,
-        username: decoded.username,
-        email: decoded.email,
-        tipo: decoded.tipo || 'común',
-        role: decoded.tipo || 'común',
-      });
+      const roleData = roleMapa[decoded.role];
+      if (!roleData) throw new Error('Rol desconocido');
+
+      const userWithRole = {
+        ...rawUser,
+        role: roleData.name,
+        permissions: roleData.permissions,
+      };
+
+      setUser(userWithRole);
       sessionStorage.setItem('token', token);
-      return { success: true, message: 'Registro exitoso', user: decoded };
-    } catch (error) {
-      const message = error?.response?.data?.message || 'Error al registrarse';
-      throw new Error(message);
+      sessionStorage.setItem('user', JSON.stringify(userWithRole));
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      return { success: true, token, user: userWithRole };
+    } catch (err) {
+      console.error('Register error', err);
+      return { success: false, error: err.response?.data?.message || 'Error desconocido' };
     }
   };
 
+  /* ----------------------------- logout ----------------------------- */
   const logout = () => {
     setUser(null);
-    sessionStorage.removeItem('token');
+    sessionStorage.clear();
+    delete api.defaults.headers.common['Authorization'];
   };
 
-  const value = { user, loading, login, logout, register };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  /* ------------------------------------------------------------------ */
+  return (
+    <AuthContext.Provider value={{ user, login, logout, register }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export const useAuth = () => useContext(AuthContext);
+/* ----------------------------- hook --------------------------------- */
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider');
+  return ctx;
+};

@@ -2,17 +2,29 @@ import React, { useContext, useState } from "react";
 import { TemaContext } from "../context/TemaContext";
 import { navbarLink } from "../utils/link";
 import { Link, useNavigate } from 'react-router-dom';
+// 1. Importar useAuth
+import { useAuth } from '../context/AuthContext';
 
 function Header({ onToggleFavorites }) {
   const { temaOscuro, alternarTema } = useContext(TemaContext);
   const [isOpen, setIsOpen] = useState(false);
   const toggleMenu = () => setIsOpen(!isOpen);
 
-  // 1. Inicializar useNavigate aquí
+  // 1. Inicializar useNavigate y useAuth aquí
   const navigate = useNavigate();
+  const { user } = useAuth(); // Obtener el estado del usuario
+
+  // 2. Función para manejar la navegación del botón de usuario (escritorio y móvil)
+  const handleAccountClick = () => {
+    if (user) {
+      navigate('/perfil');
+    } else {
+      navigate('/auth');
+    }
+  };
 
   return (
-    <header className="relative w-full min-h-[120px] bg-gradient-to-r from-blue-700 to-indigo-900  transition-colors duration-700 dark:from-indigo-900 dark:to-gray-900 rounded-b-lg shadow-md">
+    <header className="relative w-full min-h-[120px] bg-gradient-to-r from-blue-700 to-indigo-900 transition-colors duration-700 dark:from-indigo-900 dark:to-gray-900 rounded-b-lg shadow-md">
       {/* Contenedor principal para el contenido del header */}
       <div className="container mx-auto flex items-center justify-between p-4">
       <Link to="/">
@@ -62,8 +74,8 @@ function Header({ onToggleFavorites }) {
 
           {/* Botón para Mi Cuenta (solo visible en escritorio) */}
           <button
-            // 2. Usar la función navigate aquí
-            onClick={() => navigate('/auth')}
+            // 3. Usar la función handleAccountClick
+            onClick={handleAccountClick}
             className="hidden md:block text-white p-2 rounded-full bg-white/20 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-amber-300 hover:scale-110 transition-transform duration-300"
             aria-label="Mi Cuenta"
           >
@@ -134,14 +146,14 @@ function Header({ onToggleFavorites }) {
           </li>
           {/* Botón de Mi Cuenta para móviles */}
           <li className="py-3 text-center border-b border-blue-800 last:border-b-0">
-            <Link
-              to="/mi-cuenta" // Reemplaza con tu ruta a la cuenta de usuario
+            <button // Cambiado de Link a button para usar onClick
+              // 4. Usar la función handleAccountClick y toggleMenu
+              onClick={() => { handleAccountClick(); toggleMenu(); }}
               className="text-white text-lg font-semibold hover:text-sky-300 transition-colors duration-200 block w-full"
-              onClick={toggleMenu}
             >
               <i className="bi bi-person-fill mr-2"></i>
               Mi Cuenta
-            </Link>
+            </button>
           </li>
         </ul>
       </nav>
